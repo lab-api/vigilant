@@ -22,7 +22,6 @@ class Visualizer():
                                      name = col
                                       ))
         self.fig = fig
-        # return fig
 
     def plot(self):
         display(self.fig)
@@ -35,5 +34,5 @@ class Visualizer():
     def update(self, data):
         ''' Adds new data to the plot. '''
         for plot in self.fig.data:
-            plot['x'] = np.append(plot['x'], data.name)
+            plot['x'] = np.append(plot['x'], data.index[0])
             plot['y'] = np.append(plot['y'], data[plot['name']])

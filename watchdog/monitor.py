@@ -9,6 +9,7 @@ import pandas as pd
 from threading import Thread
 from IPython.display import display
 from watchdog import Visualizer
+import os
 
 @decorator.decorator
 def thread(func, *args, **kwargs):
@@ -54,21 +55,23 @@ class Monitor():
 
             self.data.loc[now, w] = value
 
+        new_data = self.data.loc[[now]]
         if self.filename is not None:
-            self.log(state, self.filename)
+            self.log(new_data, self.filename)
 
         if self.visualize:
-            self.visualizer.update(self.data.loc[now])
+            self.visualizer.update(new_data)
 
         if self.callback is not None:
-            self.callback(self.data.loc[now])
+            self.callback(new_data)
 
         return state
 
-    def log(self, state, filename):
-        ''' Append a timestamped state dict to a file. '''
-        with open(filename, 'a') as file:
-            file.write(json.dumps(state)+'\n')
+    def log(self, data, filename):
+        if not os.path.isfile(self.filename):
+            data.to_csv(filename, header=True)
+        else:
+            data.to_csv(filename, mode='a', header=False)
 
     def wait_trigger(self, period):
         time.sleep(period)
