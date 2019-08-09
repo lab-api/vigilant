@@ -37,6 +37,8 @@ class Monitor():
         if visualize:
             self.visualizer = Visualizer(self.data)
 
+        self.last_time = None
+
     def add(self, key, watchdog):
         if key in self.watchdogs:
             raise IndexError(f'A Watchdog named {key} already exists!')
@@ -93,7 +95,7 @@ class Monitor():
     @thread
     def start_periodic(self, period):
         self.on = 1
-        if not hasattr(self, 'last_time'):
+        if self.last_time is None:
             self.last_time = time.time()
         while self.on:
             self.scheduler.enterabs(self.last_time, 1, self.check)
@@ -102,6 +104,7 @@ class Monitor():
 
     def stop(self):
         self.on = 0
+        self.last_time = None
 
     def plot(self):
         if not self.visualize:
