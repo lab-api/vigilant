@@ -1,7 +1,4 @@
 ''' This modules implements the Watchdog class for reactive monitoring. '''
-
-import logging as log
-log.basicConfig(level=log.INFO)
 from abc import abstractmethod
 
 class Watchdog():
@@ -14,7 +11,7 @@ class Watchdog():
         self.experiment = experiment
         self.threshold = threshold
         self.name = name
-        self.value = 0
+        self.value = None
         self.threshold_type = 'lower'
         self.state = 0
 
@@ -29,7 +26,6 @@ class Watchdog():
         self.state = state
 
         if not self.state:
-            log.debug('Watchdog %s is reacting to an unlock!', self.name)
             self.react()
 
         return self.value, self.state

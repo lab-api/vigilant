@@ -1,13 +1,9 @@
-import json
 import datetime
 import time
-import logging as log
-log.basicConfig(level=log.INFO)
 import sched
 import decorator
 import pandas as pd
 from threading import Thread
-from IPython.display import display
 from watchdog import Visualizer
 import os
 
@@ -29,7 +25,6 @@ class Monitor():
         self.filename = filename
         self.callback = callback
         self.scheduler = sched.scheduler(time.time, time.sleep)
-        self.trigger = None
         self.data = pd.DataFrame(columns = watchdogs.keys())
         self.data.index.rename('Timestamp', inplace=True)
 
@@ -75,19 +70,9 @@ class Monitor():
         else:
             data.to_csv(filename, mode='a', header=False)
 
-    def wait_trigger(self, period):
-        time.sleep(period)
-
     @thread
-    def start_triggered(self, trigger=None):
-        if trigger is None:
-            trigger = self.trigger
+    def start_triggered(self, trigger):
         self.on = 1
-
-        if trigger is None:
-            log.warn('Attach or pass a trigger!')
-            return
-
         while self.on:
             trigger()
             self.check()
