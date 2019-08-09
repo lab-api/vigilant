@@ -5,7 +5,7 @@ log.basicConfig(level=log.INFO)
 from abc import abstractmethod
 
 class Watchdog():
-    def __init__(self, experiment, threshold, name='watchdog'):
+    def __init__(self, experiment, threshold=(None,None), name='watchdog'):
         ''' Args:
                 experiment (function): an argument-less function returning a single float-valued variable
                 threshold (tuple): numerical lower and upper bounds for logical comparison.
