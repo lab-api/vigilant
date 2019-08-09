@@ -4,7 +4,6 @@ import sched
 import decorator
 import pandas as pd
 from threading import Thread
-from watchdog import Visualizer
 import os
 
 @decorator.decorator
@@ -30,6 +29,7 @@ class Monitor():
 
         self.visualize = visualize
         if visualize:
+            from watchdog import Visualizer
             self.visualizer = Visualizer(self.data)
 
         self.last_time = None
