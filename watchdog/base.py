@@ -14,9 +14,9 @@ class Watchdog():
         self.value = None
         self.threshold_type = 'lower'
         self.state = 0
-
+        self.react = None
     def check(self):
-        ''' Private method which calls self.measure then updates the state '''
+        ''' Private method which calls self.experiment then updates the state '''
         self.value = self.experiment()
         state = 1
         if self.threshold[0] is not None:
@@ -25,12 +25,7 @@ class Watchdog():
             state = state and self.value <= self.threshold[1]
         self.state = state
 
-        if not self.state:
+        if not self.state and self.react is not None:
             self.react()
 
         return self.value, self.state
-
-    def react(self):
-        ''' Overload this method to allow a custom reaction when monitored
-            variables leave the acceptable range. '''
-        return
