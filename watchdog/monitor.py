@@ -3,8 +3,10 @@ import time
 import sched
 import decorator
 import pandas as pd
+import numpy as np
 from threading import Thread
 import os
+from watchdog import Watchdog
 
 @decorator.decorator
 def thread(func, *args, **kwargs):
@@ -12,51 +14,52 @@ def thread(func, *args, **kwargs):
     new_thread.start()
 
 class Monitor():
-    def __init__(self, watchdogs, filename = None, callback = None, visualize=False):
+    def __init__(self, filename = None, callback = None, visualize=True):
         ''' Args:
-                watchdogs (dict): a dictionary of watchdogs labeled by their names
                 filename (str): optional filename for logging
                 callback (function): a function to call each time the watchdog states
                                      are checked. The Monitor passes a Pandas dataframe
                                      of the most recent measurement to this function.
+                visualize (bool): whether to enable realtime plotting
         '''
-        self.watchdogs = watchdogs
+        self.watchdogs = {}
         self.filename = filename
         self.callback = callback
         self.scheduler = sched.scheduler(time.time, time.sleep)
-        self.data = pd.DataFrame(columns = watchdogs.keys())
+        self.data = pd.DataFrame()
         self.data.index.rename('Timestamp', inplace=True)
 
-        self.visualize = visualize
+        self.visualizer = None
         if visualize:
             from watchdog import Visualizer
             self.visualizer = Visualizer(self.data)
 
         self.last_time = None
+        self.thresholds = {}
 
-    def add(self, key, watchdog):
-        if key in self.watchdogs:
-            raise IndexError(f'A Watchdog named {key} already exists!')
-        self.watchdogs[key] = watchdog
+    def watch(self, experiment, threshold=(None, None), name=None, reaction=None):
+        if name is None:
+            name = experiment.__name__
+        self.thresholds[name] = threshold
+        self.watchdogs[name] = Watchdog(experiment, threshold, name)
+        if reaction is not None:
+            self.watchdogs[name].react = reaction
 
+        self.data[name] = np.nan
+        if self.visualizer is not None:
+            self.visualizer.add_trace(name)
 
     def check(self):
         now = datetime.datetime.now().isoformat()
-        state = {'time': now,
-                 'values': {},
-                 'states': {}}
         for w in self.watchdogs:
             value, tf = self.watchdogs[w].check()
-            state['values'][w] = value
-            state['states'][w] = int(tf)
-
             self.data.loc[now, w] = value
-
         new_data = self.data.loc[[now]]
-        if self.filename is not None:
-            self.log(new_data, self.filename)
 
-        if self.visualize:
+        if self.filename is not None:
+            self.log(new_data)
+
+        if self.visualizer is not None:
             self.visualizer.update(new_data)
 
         if self.callback is not None:
@@ -64,11 +67,11 @@ class Monitor():
 
         return state
 
-    def log(self, data, filename):
+    def log(self, data):
         if not os.path.isfile(self.filename):
-            data.to_csv(filename, header=True)
+            data.to_csv(self.filename, header=True)
         else:
-            data.to_csv(filename, mode='a', header=False)
+            data.to_csv(self.filename, mode='a', header=False)
 
     @thread
     def start_triggered(self, trigger):
@@ -92,6 +95,6 @@ class Monitor():
         self.last_time = None
 
     def plot(self):
-        if not self.visualize:
+        if self.visualizer is None:
             raise Exception('Monitor visualization is disabled unless visualize=True is passed.')
         self.visualizer.plot()

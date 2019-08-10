@@ -14,18 +14,19 @@ class Visualizer():
             yaxis={'title': 0}
         )
 
-        fig = go.FigureWidget([], layout=layout)
+        self.fig = go.FigureWidget([], layout=layout)
         for col in self.data.columns:
-            fig.add_trace(go.Scatter(y = self.data[col],
-                                     x = self.data.index,
-                                     mode = 'markers',
-                                     name = col
-                                      ))
-        self.fig = fig
+            self.add_trace(col)
 
     def plot(self):
         display(self.fig)
 
+    def add_trace(self, name):
+        self.fig.add_trace(go.Scatter(y = self.data[name],
+                                      x = self.data.index,
+                                      mode = 'markers',
+                                      name = name
+                                      ))
     def refresh(self):
         for plot in self.fig.data:
             plot['x'] = self.data.index
