@@ -9,5 +9,6 @@ install:
   - pip install .
 
 script:
-  - pytest -s -v
+  - pytest --cov=watchdog watchdog/tests
+after_success:
   - coveralls
