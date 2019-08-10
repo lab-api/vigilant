@@ -1,0 +1,5 @@
+coveralls
+pandas
+numpy
+plotly==4.1.0
+jupyter
