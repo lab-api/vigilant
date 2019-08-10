@@ -17,7 +17,7 @@ def test_jitter():
     m = Monitor()
     m.watch(read_voltage)
 
-    m.start_periodic(period=0.1)
+    m.start(period=0.1)
 
     time.sleep(5)
     m.stop()
@@ -36,7 +36,7 @@ def test_triggering():
     def trigger():
         time.sleep(.1)
         return
-    m.start_triggered(trigger=trigger)
+    m.start(trigger=trigger)
 
     time.sleep(5)
     m.stop()
@@ -51,16 +51,16 @@ def test_react():
     ## test lower threshold failing
     m = Monitor()
     m.watch(read_voltage, threshold=(3, None), reaction=m.stop)
-    m.start_periodic(0.1)
+    m.start(period=0.1)
     time.sleep(0.2)
-    assert not m.on
+    assert not m.running
 
     ## test upper threshold failing
     m = Monitor()
     m.watch(read_voltage, threshold=(None, 1), reaction=m.stop)
-    m.start_periodic(0.1)
+    m.start(period=0.1)
     time.sleep(0.2)
-    assert not m.on
+    assert not m.running
 
 def test_logging():
     def read_integer():
@@ -72,7 +72,7 @@ def test_logging():
 
     m = Monitor(filename='test.csv')
     m.watch(read_integer)
-    m.start_periodic(0.1)
+    m.start(period=0.1)
     time.sleep(1)
     m.stop()
 
