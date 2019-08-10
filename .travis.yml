@@ -7,7 +7,7 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install .
-  - pip install pytest pytest-cov coveralls pyyaml
+  - pip install pytest pytest-cov
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
@@ -17,5 +17,4 @@ script:
   - coverage run --source watchdog -m pytest
   - coverage xml
 after_script:
-  - coveralls
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT -t coverage.py
