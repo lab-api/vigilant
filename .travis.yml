@@ -10,6 +10,7 @@ install:
   - pip install pytest pytest-cov coveralls pyyaml
 
 before_script:
+  - export CC_TEST_REPORTER_ID=c24876726317382f0dd10866fe2c954e6c344cba41fa12f8796a54a2ca5a9c87
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
