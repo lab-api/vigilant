@@ -11,7 +11,7 @@ Watchdog is a Python framework for realtime, reactive process monitoring. Suppos
 from watchdog import Monitor
 m = Monitor()
 m.watch(read_voltage)
-m.start_periodic(period=1)
+m.start(period=1)
 ```
 
 If you pass a threshold into the ``Monitor.watch()`` method, you can also define a reaction function to be called when a monitored variable exits the range. This can be used to alert operators to a failure, or to automatically bring the process back into the operational range:
@@ -26,6 +26,6 @@ Watchdog provides a number of other features, including:
 * Adding new monitored variables dynamically
 * Plotting acquired data in realtime
 * Automatically saving data to file
-* Custom callbacks to pipe acquired data to external processes for UI or analysis
+* Data feed with ZMQ to which external processes can subscribe for UI or analysis
 
 These features are covered in the [Tutorial notebook](https://github.com/robertfasano/watchdog/blob/master/watchdog/tutorial.ipynb), which can also be run in the cloud from the Binder badge above. Note: some computers have issues displaying the Plotly graphs in Chrome. If no plot appears when you call ``Monitor.plot()``, try running in Firefox.
