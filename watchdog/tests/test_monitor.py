@@ -2,19 +2,20 @@ from watchdog import Monitor
 import time
 import numpy as np
 import pandas as pd
+import os
 
 def read_voltage():
     return 2.13
 
 def test_watch():
-    m = Monitor()
+    m = Monitor(address=None)
     m.watch(read_voltage)
     m.check()
 
     assert m.data.iloc[0]['read_voltage'] == 2.13
 
 def test_jitter():
-    m = Monitor()
+    m = Monitor(address=None)
     m.watch(read_voltage)
 
     m.start(period=0.1)
@@ -29,7 +30,7 @@ def test_jitter():
     assert np.abs(np.mean(delta)-0.1) < np.std(delta)
 
 def test_triggering():
-    m = Monitor()
+    m = Monitor(address=None)
     m.watch(read_voltage)
 
     import time
@@ -49,14 +50,14 @@ def test_triggering():
 
 def test_react():
     ## test lower threshold failing
-    m = Monitor()
+    m = Monitor(address=None)
     m.watch(read_voltage, threshold=(3, None), reaction=m.stop)
     m.start(period=0.1)
     time.sleep(0.2)
     assert not m.running
 
     ## test upper threshold failing
-    m = Monitor()
+    m = Monitor(address=None)
     m.watch(read_voltage, threshold=(None, 1), reaction=m.stop)
     m.start(period=0.1)
     time.sleep(0.2)
@@ -66,11 +67,10 @@ def test_logging():
     def read_integer():
         return np.random.randint(0, 10)
 
-    import os
     if os.path.exists("test.csv"):
       os.remove("test.csv")
 
-    m = Monitor(filename='test.csv')
+    m = Monitor(filename='test.csv', address=None)
     m.watch(read_integer)
     m.start(period=0.1)
     time.sleep(1)
