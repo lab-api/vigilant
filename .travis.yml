@@ -15,6 +15,7 @@ before_script:
   - ./cc-test-reporter before-build
 script:
   - coverage run --source watchdog -m pytest
+  - coverage xml
 after_script:
   - coveralls
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT -t coverage.py
