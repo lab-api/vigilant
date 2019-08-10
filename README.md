@@ -1,5 +1,6 @@
 # watchdog
 [![Build Status](https://travis-ci.org/robertfasano/watchdog.svg?branch=master)](https://travis-ci.org/robertfasano/watchdog)
+[![Requirements Status](https://requires.io/github/robertfasano/watchdog/requirements.svg?branch=master)](https://requires.io/github/robertfasano/watchdog/requirements/?branch=master)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/0be76138b49ecb2081eb/test_coverage)](https://codeclimate.com/github/robertfasano/watchdog/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/0be76138b49ecb2081eb/maintainability)](https://codeclimate.com/github/robertfasano/watchdog/maintainability)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/robertfasano/watchdog/master?filepath=watchdog%2Ftutorial.ipynb)
