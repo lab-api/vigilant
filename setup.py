@@ -8,7 +8,5 @@ setup(
     author='Robert Fasano',
     author_email='robert.j.fasano@colorado.edu',
     packages=find_packages(exclude=['docs']),
-    license='MIT',
-    long_description=open('README.md').read(),
-    install_requires=['plotly', 'IPython', 'jupyter']
+    license='MIT'
 )
