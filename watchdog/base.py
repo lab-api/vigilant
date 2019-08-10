@@ -1,12 +1,13 @@
 ''' This modules implements the Watchdog class for reactive monitoring. '''
-from abc import abstractmethod
 
 class Watchdog():
-    def __init__(self, experiment, threshold=(None,None), name='watchdog'):
+    def __init__(self, experiment, threshold=(None, None), name='watchdog'):
         ''' Args:
-                experiment (function): an argument-less function returning a single float-valued variable
-                threshold (tuple): numerical lower and upper bounds for logical comparison.
-                                   Deactivate either bound by passing None.
+                experiment (function): an argument-less function returning a
+                                       single float-valued variable.
+                threshold (tuple): numerical lower and upper bounds for logical
+                                   comparison. Deactivate either bound by passing
+                                   None.
         '''
         self.experiment = experiment
         self.threshold = threshold
@@ -15,8 +16,10 @@ class Watchdog():
         self.threshold_type = 'lower'
         self.state = 0
         self.react = None
+
     def check(self):
-        ''' Private method which calls self.experiment then updates the state '''
+        ''' Measure the attached function, compare to thresholds if defined, and
+            return the value and a bool reflecting the comparison. '''
         self.value = self.experiment()
         state = 1
         if self.threshold[0] is not None:
