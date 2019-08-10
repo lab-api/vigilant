@@ -8,11 +8,6 @@ from threading import Thread
 import os
 from watchdog import Watchdog
 
-@decorator.decorator
-def thread(func, *args, **kwargs):
-    new_thread = Thread(target=func, args=args, kwargs=kwargs)
-    new_thread.start()
-
 class Monitor():
     def __init__(self, filename = None, callback = None, visualize=True):
         ''' Args:
@@ -73,14 +68,12 @@ class Monitor():
         else:
             data.to_csv(self.filename, mode='a', header=False)
 
-    @thread
     def start_triggered(self, trigger):
         self.on = 1
         while self.on:
             trigger()
             self.check()
 
-    @thread
     def start_periodic(self, period):
         self.on = 1
         if self.last_time is None:
@@ -89,6 +82,15 @@ class Monitor():
             self.scheduler.enterabs(self.last_time, 1, self.check)
             self.last_time += period
             self.scheduler.run()
+
+    def start(self, period=None, trigger=None):
+        if trigger is None and period is not None:
+            thread = Thread(target=self.start_periodic, args=(period,))
+        elif period is None and trigger is not None:
+            thread = Thread(target=self.start_triggered, args=(trigger,))
+        else:
+            raise Exception('Pass either a period or a trigger to Monitor.start().')
+        thread.start()
 
     def stop(self):
         self.on = 0
