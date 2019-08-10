@@ -65,7 +65,7 @@ class Monitor():
         if self.callback is not None:
             self.callback(new_data)
 
-        return state
+        return new_data
 
     def log(self, data):
         if not os.path.isfile(self.filename):
