@@ -2,27 +2,26 @@ import datetime
 import time
 import sched
 import os
+import json
 from threading import Thread
 import pandas as pd
 import numpy as np
-from watchdog import Watchdog
+from watchdog import Watchdog, Publisher
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
         the Monitor.watch() method. Also supports logging to file, realtime plotting,
         and interaction with external scripts through a callback.
     '''
-    def __init__(self, filename=None, callback=None, visualize=True):
+    def __init__(self, filename=None, visualize=True, address='127.0.0.1', port=1105):
         ''' Args:
                 filename (str): optional filename for logging
-                callback (function): a function to call each time the watchdog states
-                                     are checked. The Monitor passes a Pandas dataframe
-                                     of the most recent measurement to this function.
                 visualize (bool): whether to enable realtime plotting
+                address (str): IP address for data publishing. Pass None to disable.
+                port (int): port for data publishing
         '''
         self.watchdogs = {}
         self.filename = filename
-        self.callback = callback
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.data = pd.DataFrame()
         self.data.index.rename('Timestamp', inplace=True)
@@ -36,6 +35,11 @@ class Monitor():
         self.thresholds = {}
 
         self.running = False
+
+        self.publisher = None
+        if address is not None:
+            self.publisher = Publisher(address, port)
+
 
     def watch(self, experiment, threshold=(None, None), name=None, reaction=None):
         ''' Add a variable to be monitored.
@@ -76,8 +80,8 @@ class Monitor():
         if self.visualizer is not None:
             self.visualizer.update(new_data)
 
-        if self.callback is not None:
-            self.callback(new_data)
+        if self.publisher is not None:
+            self.publisher.send(new_data)
 
         return new_data
 
