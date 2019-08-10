@@ -15,7 +15,7 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
-  - pytest --cov=watchdog watchdog/tests
+  - pytest --cov=watchdog watchdog/tests --cov-report xml
 after_script:
   - coveralls
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT -t coverage.py -r CC_TEST_REPORTER_ID
