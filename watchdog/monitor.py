@@ -4,8 +4,7 @@ import sched
 import os
 from threading import Thread
 import pandas as pd
-import numpy as np
-from watchdog import Watchdog
+from watchdog import Watcher, Listener
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -17,7 +16,8 @@ class Monitor():
         ''' Args:
                 filename (str): optional filename for logging
         '''
-        self.watchdogs = {}
+        self.watchers = {}
+        self.listeners = {}
         self.filename = filename
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -28,47 +28,86 @@ class Monitor():
         self.last_time = None
         self.running = False
 
-    def watch(self, experiment, threshold=(None, None), name=None, reaction=None):
-        ''' Add a variable to be monitored.
+    def watch(self, experiment, name=None, threshold=(None, None), reaction=None):
+        ''' Add a variable to be monitored actively (querying a method for new
+            results with each measurement cycle).
             Args:
                 experiment (callable): a function or other callable. Should take
                                        no arguments and return a numerical value.
-                threshold (tuple): lower and upper threshold. Pass None to either
-                                   threshold to deactivate it.
                 name (str): optional variable name. If None is passed, the default
                             experiment.__name__ string is used.
+                threshold (tuple): lower and upper threshold. Pass None to either
+                                   threshold to deactivate it.
                 reaction (function): optional action to take when the variable
                                      exits defined thresholds.
         '''
         if name is None:
             name = experiment.__name__
-        self.watchdogs[name] = Watchdog(experiment, threshold, name)
-        if reaction is not None:
-            self.watchdogs[name].react = reaction
+        self.watchers[name] = Watcher(name, experiment,
+                                      threshold=threshold,
+                                      reaction=reaction)
 
-        self.data[name] = np.nan
+    def listen(self, name, address, port, threshold=(None, None), reaction=None):
+        ''' Add a variable to be monitored passively (initiated from the variable,
+            not the monitor).
+            Args:
+                name (str): label with which to store the data
+                address (str): IP address of data feed
+                port (int): port of data feed
+                threshold (tuple): lower and upper threshold. Pass None to either
+                                   threshold to deactivate it.
+                reaction (function): optional action to take when the variable
+                                     exits defined thresholds.
+        '''
+
+        self.listeners[name] = Listener(name, address, port,
+                                        threshold=threshold,
+                                        reaction=reaction)
 
     def add_extension(self, extension):
         ''' Add an extension by registering its update() method as a callback '''
         self.callbacks.append(extension.update)
 
     def check(self):
-        ''' Check all attached watchdogs and optionally log the result, update
+        ''' Check all attached watchers and optionally log the result, update
             the plot, and/or call the callback.
         '''
+        new_data = pd.DataFrame()
         now = datetime.datetime.now().isoformat()
-        for name in self.watchdogs:
-            value, in_threshold = self.watchdogs[name].check()
-            self.data.loc[now, name] = value
-        new_data = self.data.loc[[now]]
 
-        if self.filename is not None:
-            self.log(new_data)
+        ## check watchers
+        for name in self.watchers:
+            value, in_threshold = self.watchers[name].check()
+            new_data.loc[now, name] = value
 
-        for callback in self.callbacks:
-            callback(new_data)
+        ## check listeners
+        for name, listener in self.listeners.items():
+            while not listener.queue.empty():
+                new_queue_data = listener.queue.get()
+                new_data = new_data.append(new_queue_data, sort=False)
+
+        # check listener results against thresholds
+        for name, listener in self.listeners.items():
+            if name in new_data:
+                vals = new_data[name].dropna().values
+                listener.check(vals)
+
+        if len(new_data) == 0:
+            return
+
+        new_data.sort_index(inplace=True)
+        self.data = self.data.append(new_data, sort=False)
+        self.process(new_data)
 
         return new_data
+
+    def process(self, data):
+        ''' Logs data and sends it to extensions '''
+        if self.filename is not None:
+            self.log(data)
+
+        for callback in self.callbacks:
+            callback(data)
 
     def log(self, data):
         ''' Append the latest measurement to file. If the file does not exist,
