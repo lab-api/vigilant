@@ -2,44 +2,31 @@ import datetime
 import time
 import sched
 import os
-import json
 from threading import Thread
 import pandas as pd
 import numpy as np
-from watchdog import Watchdog, Publisher
+from watchdog import Watchdog
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
-        the Monitor.watch() method. Also supports logging to file, realtime plotting,
-        and interaction with external scripts through a callback.
+        the Monitor.watch() method. Extensions can be added using the
+        Monitor.add_extension() method, adding features like realtime plotting,
+        ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None, visualize=True, address='127.0.0.1', port=1105):
+    def __init__(self, filename=None):
         ''' Args:
                 filename (str): optional filename for logging
-                visualize (bool): whether to enable realtime plotting
-                address (str): IP address for data publishing. Pass None to disable.
-                port (int): port for data publishing
         '''
         self.watchdogs = {}
         self.filename = filename
         self.scheduler = sched.scheduler(time.time, time.sleep)
+
         self.data = pd.DataFrame()
         self.data.index.rename('Timestamp', inplace=True)
 
-        self.visualizer = None
-        if visualize:
-            from watchdog import Visualizer
-            self.visualizer = Visualizer(self.data)
-
+        self.callbacks = []
         self.last_time = None
-        self.thresholds = {}
-
         self.running = False
-
-        self.publisher = None
-        if address is not None:
-            self.publisher = Publisher(address, port)
-
 
     def watch(self, experiment, threshold=(None, None), name=None, reaction=None):
         ''' Add a variable to be monitored.
@@ -55,14 +42,15 @@ class Monitor():
         '''
         if name is None:
             name = experiment.__name__
-        self.thresholds[name] = threshold
         self.watchdogs[name] = Watchdog(experiment, threshold, name)
         if reaction is not None:
             self.watchdogs[name].react = reaction
 
         self.data[name] = np.nan
-        if self.visualizer is not None:
-            self.visualizer.add_trace(name)
+
+    def add_extension(self, extension):
+        ''' Add an extension by registering its update() method as a callback '''
+        self.callbacks.append(extension.update)
 
     def check(self):
         ''' Check all attached watchdogs and optionally log the result, update
@@ -77,11 +65,8 @@ class Monitor():
         if self.filename is not None:
             self.log(new_data)
 
-        if self.visualizer is not None:
-            self.visualizer.update(new_data)
-
-        if self.publisher is not None:
-            self.publisher.send(new_data)
+        for callback in self.callbacks:
+            callback(new_data)
 
         return new_data
 
@@ -139,9 +124,3 @@ class Monitor():
         ''' Stop acquisition. '''
         self.running = False
         self.last_time = None
-
-    def plot(self):
-        ''' Display the visualizer in a Jupyter notebook. '''
-        if self.visualizer is None:
-            raise Exception('Monitor visualization is disabled unless visualize=True is passed.')
-        self.visualizer.plot()

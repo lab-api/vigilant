@@ -27,5 +27,6 @@ Watchdog provides a number of other features, including:
 * Plotting acquired data in realtime
 * Automatically saving data to file
 * Data feed with ZMQ to which external processes can subscribe for UI or analysis
+* Scalable time-series storage using InfluxDB
 
 These features are covered in the [Tutorial notebook](https://github.com/robertfasano/watchdog/blob/master/watchdog/tutorial.ipynb), which can also be run in the cloud from the Binder badge above. Note: some computers have issues displaying the Plotly graphs in Chrome. If no plot appears when you call ``Monitor.plot()``, try running in Firefox.

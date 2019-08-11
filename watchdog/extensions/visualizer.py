@@ -4,13 +4,11 @@ import plotly.graph_objs as go
 
 class Visualizer():
     ''' Handles plotting in Jupyter notebooks using Plotly. '''
-    def __init__(self, data):
+    def __init__(self):
         ''' Args:
                 data (pandas.DataFrame)
         '''
-        self.data = data
         self.make_fig()
-        self.active = True
 
     def make_fig(self):
         ''' Create a blank FigureWidget to add data to. '''
@@ -20,8 +18,8 @@ class Visualizer():
         )
 
         self.fig = go.FigureWidget([], layout=layout)
-        for col in self.data.columns:
-            self.add_trace(col)
+        # for col in self.data.columns:
+        #     self.add_trace(col)
 
     def plot(self):
         ''' Display the FigureWidget in a Jupyter notebook. '''
@@ -31,8 +29,8 @@ class Visualizer():
         ''' Add a new trace to the plot corresponding to a name string in
             self.data.columns.
         '''
-        self.fig.add_trace(go.Scatter(y=self.data[name],
-                                      x=self.data.index,
+        self.fig.add_trace(go.Scatter(y=[],
+                                      x=[],
                                       mode='markers',
                                       name=name
                                       ))
@@ -52,6 +50,10 @@ class Visualizer():
             Args:
                 data (pandas.DataFrame): a DataFrame containing new data
         '''
+        for col in data.columns:
+            if col not in [x['name'] for x in self.fig.data]:
+                self.add_trace(col)
+
         for plot in self.fig.data:
             plot['x'] = np.append(plot['x'], data.index[0])
             plot['y'] = np.append(plot['y'], data[plot['name']])
