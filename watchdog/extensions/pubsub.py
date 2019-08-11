@@ -9,7 +9,7 @@ class Publisher:
 
     def update(self, data):
         if isinstance(data, pd.DataFrame):
-            self.socket.send_string(json.dumps(dataframe.to_json()))
+            self.socket.send_string(json.dumps(data.to_json()))
         else:
             self.socket.send_string(str(data))
 
@@ -25,6 +25,7 @@ class Subscriber:
         '''
         msg = self.socket.recv_string()
         try:
-            return float(msg)
-        except TypeError:
-            return pd.read_json(msg)
+            msg = float(msg)
+        except Exception:
+            msg = pd.read_json(json.loads(msg))
+        return msg
