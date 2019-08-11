@@ -35,7 +35,7 @@ class Watcher():
         return value, state
 
 class Listener():
-    def __init__(self, name, address, port, threshold=(None, None), reaction=None):
+    def __init__(self, name, address, threshold=(None, None), reaction=None):
 
         ''' Args:
                 name (str)
@@ -48,7 +48,7 @@ class Listener():
         self.react = reaction
         self.queue = SimpleQueue()
 
-        self.process = Process(target=self.listen, args=(name, address, port, self.queue))
+        self.process = Process(target=self.listen, args=(name, address, self.queue))
         self.process.start()
 
     def check(self, value):
@@ -66,8 +66,8 @@ class Listener():
 
         return value, state
 
-    def listen(self, name, address, port, queue):
-        subscriber = Subscriber(address, port)
+    def listen(self, name, address, queue):
+        subscriber = Subscriber(address)
 
         while True:
             value = subscriber.receive()

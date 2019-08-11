@@ -47,20 +47,19 @@ class Monitor():
                                       threshold=threshold,
                                       reaction=reaction)
 
-    def listen(self, name, address, port, threshold=(None, None), reaction=None):
+    def listen(self, name, address, threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored passively (initiated from the variable,
             not the monitor).
             Args:
                 name (str): label with which to store the data
-                address (str): IP address of data feed
-                port (int): port of data feed
+                address (str): address of data feed, e.g. '127.0.0.1:8000'
                 threshold (tuple): lower and upper threshold. Pass None to either
                                    threshold to deactivate it.
                 reaction (function): optional action to take when the variable
                                      exits defined thresholds.
         '''
 
-        self.listeners[name] = Listener(name, address, port,
+        self.listeners[name] = Listener(name, address, 
                                         threshold=threshold,
                                         reaction=reaction)
 

@@ -2,8 +2,10 @@ from influxdb import DataFrameClient
 import pandas as pd
 
 class InfluxClient:
-    def __init__(self, address='localhost', port=8086, database='demo'):
-        self.client = DataFrameClient(address, port, 'root', 'root', database)
+    def __init__(self, address='localhost:8086', database='demo'):
+        ip = address.split(':')[0]
+        port = int(address.split(':')[1])
+        self.client = DataFrameClient(ip, port, 'root', 'root', database)
         self.database = database
 
         if not self.database_exists(database):

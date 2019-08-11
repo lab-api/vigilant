@@ -10,9 +10,9 @@ def read_voltage():
 
 def test_listen():
     m = Monitor()
-    m.listen('data feed', address='127.0.0.1', port=9000)
+    m.listen('data feed', address='127.0.0.1:9000')
 
-    feed = Publisher('127.0.0.1', port=9000)
+    feed = Publisher('127.0.0.1:9000')
     time.sleep(0.5)
     feed.update(3.14)
     time.sleep(0.5)

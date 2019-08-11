@@ -3,9 +3,9 @@ import json
 import pandas as pd
 
 class Publisher:
-    def __init__(self, address='127.0.0.1', port=1105):
+    def __init__(self, address='127.0.0.1:1105'):
         self.socket = zmq.Context().socket(zmq.PUB)
-        self.socket.bind(f"tcp://{address}:{port}")
+        self.socket.bind(f"tcp://{address}")
 
     def update(self, data):
         if isinstance(data, pd.DataFrame):
@@ -14,10 +14,10 @@ class Publisher:
             self.socket.send_string(str(data))
 
 class Subscriber:
-    def __init__(self, address='127.0.0.1', port=1105):
+    def __init__(self, address='127.0.0.1:1105'):
         self.socket = zmq.Context().socket(zmq.SUB)
         self.socket.setsockopt_string(zmq.SUBSCRIBE, '')
-        self.socket.connect(f"tcp://{address}:{port}")
+        self.socket.connect(f"tcp://{address}")
 
     def receive(self):
         ''' Receives either a float or json-formatted dataframe and processes and
