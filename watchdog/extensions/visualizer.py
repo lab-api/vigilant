@@ -5,24 +5,12 @@ import plotly.graph_objs as go
 class Visualizer():
     ''' Handles plotting in Jupyter notebooks using Plotly. '''
     def __init__(self):
-        ''' Args:
-                data (pandas.DataFrame)
-        '''
-        self.make_fig()
-
-    def make_fig(self):
-        ''' Create a blank FigureWidget to add data to. '''
         layout = go.Layout(
             xaxis={'title': 'Time'},
             yaxis={'title': 0}
         )
 
         self.fig = go.FigureWidget([], layout=layout)
-        # for col in self.data.columns:
-        #     self.add_trace(col)
-
-    def plot(self):
-        ''' Display the FigureWidget in a Jupyter notebook. '''
         display(self.fig)
 
     def add_trace(self, name):
