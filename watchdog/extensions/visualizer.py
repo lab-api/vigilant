@@ -43,5 +43,5 @@ class Visualizer():
                 self.add_trace(col)
 
         for plot in self.fig.data:
-            plot['x'] = np.append(plot['x'], data.index[0])
-            plot['y'] = np.append(plot['y'], data[plot['name']])
+            plot['x'] = np.append(plot['x'], data.index.values)
+            plot['y'] = np.append(plot['y'], data[plot['name']].values)
