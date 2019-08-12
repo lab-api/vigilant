@@ -1,14 +1,13 @@
-# watchdog
-[![Build Status](https://travis-ci.org/robertfasano/watchdog.svg?branch=master)](https://travis-ci.org/robertfasano/watchdog)
-[![Requirements Status](https://requires.io/github/robertfasano/watchdog/requirements.svg?branch=master)](https://requires.io/github/robertfasano/watchdog/requirements/?branch=master)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/0be76138b49ecb2081eb/test_coverage)](https://codeclimate.com/github/robertfasano/watchdog/test_coverage)
-[![Maintainability](https://api.codeclimate.com/v1/badges/0be76138b49ecb2081eb/maintainability)](https://codeclimate.com/github/robertfasano/watchdog/maintainability)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/robertfasano/watchdog/master?filepath=watchdog%2Ftutorial.ipynb)
+# vigilant
+[![Build Status](https://travis-ci.org/lab-api/vigilant.svg?branch=master)](https://travis-ci.org/lab-api/vigilant)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/1bf03b260cf34826639d/test_coverage)](https://codeclimate.com/github/lab-api/vigilant/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/1bf03b260cf34826639d/maintainability)](https://codeclimate.com/github/lab-api/vigilant/maintainability)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/lab-api/vigilant/master?filepath=vigilant%2Ftutorial.ipynb)
 
-Watchdog is a Python framework for realtime, reactive process monitoring. Suppose we have a function ``read_voltage()`` which measures and returns a voltage. We can create a Monitor task to measure this voltage once per second:
+Vigilant is a Python framework for realtime, reactive process monitoring. Suppose we have a function ``read_voltage()`` which measures and returns a voltage. We can create a Monitor task to measure this voltage once per second:
 
 ```python
-from watchdog import Monitor
+from vigilant import Monitor
 monitor = Monitor()
 monitor.watch(read_voltage)
 monitor.start(period=1)
@@ -25,13 +24,13 @@ You can also subscribe to external data feeds, which will be monitored asynchron
 ```python
 monitor.listen('voltage feed', address='127.0.0.1:9000')
 ```
-Watchdog provides a number of other features, including:
+Vigilant provides a number of other features, including:
 * Adding new monitored variables dynamically
 * Plotting acquired data in realtime
 * Automatically saving data to file
 * Data feed with ZMQ to which external processes can subscribe for UI or analysis
 * Scalable time-series storage using InfluxDB
 
-These features are covered in the [Tutorial notebook](https://github.com/robertfasano/watchdog/blob/master/watchdog/tutorial.ipynb), which can also be run in the cloud from the Binder badge above. 
+These features are covered in the [Tutorial notebook](https://github.com/robertfasano/vigilant/blob/master/vigilant/tutorial.ipynb), which can also be run in the cloud from the Binder badge above.
 
 Note: some computers have issues displaying the Plotly graphs in Chrome. If no plot appears when the Visualizer extension is loaded, try running in Firefox.

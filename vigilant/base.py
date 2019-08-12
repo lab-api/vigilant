@@ -1,9 +1,9 @@
-''' This modules implements the Watchdog class for reactive monitoring. '''
+''' This modules implements the Watcher and Listener classes for reactive monitoring. '''
 from multiprocessing import Process, SimpleQueue
 import datetime
 import pandas as pd
 import numpy as np
-from watchdog.extensions import Subscriber
+from vigilant.extensions import Subscriber
 
 class Watcher():
     def __init__(self, name, experiment, threshold=(None, None), reaction=None):

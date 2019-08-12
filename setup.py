@@ -2,9 +2,9 @@ from distutils.core import setup
 from setuptools import find_packages
 
 setup(
-    name='watchdog',
+    name='vigilant',
     version='0.1',
-    description='Reactive monitoring framework for experimental physics',
+    description='Reactive monitoring framework',
     author='Robert Fasano',
     author_email='robert.j.fasano@colorado.edu',
     packages=find_packages(exclude=['docs']),

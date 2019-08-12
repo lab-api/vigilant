@@ -4,7 +4,7 @@ import sched
 import os
 from threading import Thread
 import pandas as pd
-from watchdog import Watcher, Listener
+from vigilant import Watcher, Listener
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -59,7 +59,7 @@ class Monitor():
                                      exits defined thresholds.
         '''
 
-        self.listeners[name] = Listener(name, address, 
+        self.listeners[name] = Listener(name, address,
                                         threshold=threshold,
                                         reaction=reaction)
 

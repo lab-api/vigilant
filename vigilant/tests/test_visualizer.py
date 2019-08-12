@@ -1,5 +1,5 @@
-from watchdog import Monitor
-from watchdog.extensions import Visualizer
+from vigilant import Monitor
+from vigilant.extensions import Visualizer
 
 def test_add_trace():
     m = Monitor()
