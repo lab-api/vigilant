@@ -23,7 +23,7 @@ monitor.watch(read_voltage, threshold=(0, 1), reaction=react)
 ```
 You can also subscribe to external data feeds, which will be monitored asynchronously and merged with the dataset during the monitoring cycle:
 ```python
-monitor.listen('voltage feed', address='127.0.0.1', port=9000)
+monitor.listen('voltage feed', address='127.0.0.1:9000')
 ```
 Watchdog provides a number of other features, including:
 * Adding new monitored variables dynamically
