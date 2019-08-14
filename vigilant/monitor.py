@@ -121,6 +121,14 @@ class Monitor():
         for callback in self.callbacks:
             callback(data)
 
+    def resample(self, data, freq='1s'):
+        ''' Bin observations into the passed frequency '''
+        data.index = pd.DatetimeIndex(data.index)   # convert to datetime index for resampling
+        data = data.reset_index().groupby(pd.Grouper(key='index', freq=freq)).mean()  # resample
+        data.index = data.index.strftime('%Y-%m-%dT%H:%M:%S.%f')  # convert back to string index
+
+        return data
+
     def alert(self):
         out_of_threshold = [obs.name for obs in self.observers.values() if not obs.in_threshold]
         msg = f'Observers {out_of_threshold} are out of threshold!'
