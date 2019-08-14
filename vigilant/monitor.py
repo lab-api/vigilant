@@ -16,17 +16,33 @@ class Monitor():
         ''' Args:
                 filename (str): optional filename for logging
         '''
-        self.watchers = {}
-        self.listeners = {}
+        self.observers = {}
         self.filename = filename
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
         self.data = pd.DataFrame()
         self.data.index.rename('Timestamp', inplace=True)
 
+        self._in_threshold = True     # assume all states are good to start
         self.callbacks = []
         self.last_time = None
         self.running = False
+
+    def alert(self):
+        ## gather offending observers
+        out_of_threshold = [obs.name for obs in self.observers.values() if not obs.in_threshold]
+        print(f'Observers {out_of_threshold} are out of threshold!')
+
+    @property
+    def in_threshold(self):
+        return self._in_threshold
+
+    @in_threshold.setter
+    def in_threshold(self, tf):
+        if self.in_threshold and not tf:
+            self.alert()
+
+        self._in_threshold = tf
 
     def watch(self, experiment, name=None, threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
@@ -43,7 +59,7 @@ class Monitor():
         '''
         if name is None:
             name = experiment.__name__
-        self.watchers[name] = Watcher(name, experiment,
+        self.observers[name] = Watcher(name, experiment,
                                       threshold=threshold,
                                       reaction=reaction)
 
@@ -59,7 +75,7 @@ class Monitor():
                                      exits defined thresholds.
         '''
 
-        self.listeners[name] = Listener(name, address,
+        self.observers[name] = Listener(name, address,
                                         threshold=threshold,
                                         reaction=reaction)
 
@@ -70,32 +86,29 @@ class Monitor():
     def check(self):
         ''' Check all attached watchers and optionally log the result, update
             the plot, and/or call the callback.
+
+            If a value is out of threshold, enter the Alert state.
         '''
         new_data = pd.DataFrame()
+
         now = datetime.datetime.now().isoformat()
 
-        ## check watchers
-        for name in self.watchers:
-            value, in_threshold = self.watchers[name].check()
-            new_data.loc[now, name] = value
+        all_in_threshold = True
 
-        ## check listeners
-        for name, listener in self.listeners.items():
-            while not listener.queue.empty():
-                new_queue_data = listener.queue.get()
-                new_data = new_data.append(new_queue_data, sort=False)
-
-        # check listener results against thresholds
-        for name, listener in self.listeners.items():
-            if name in new_data:
-                vals = new_data[name].dropna().values
-                listener.check(vals)
+        for name, observer in self.observers.items():
+            observation = observer.measure()
+            if len(observation) != 0:
+                new_data = new_data.append(observation, sort=False)
+                all_in_threshold &= observer.compare(observation)
 
         if len(new_data) == 0:
             return
 
+        self.in_threshold &= all_in_threshold
+
         new_data.sort_index(inplace=True)
         self.data = self.data.append(new_data, sort=False)
+
         self.process(new_data)
 
         return new_data
