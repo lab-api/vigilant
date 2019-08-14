@@ -25,13 +25,9 @@ class Monitor():
 
         self._in_threshold = True     # assume all states are good to start
         self.callbacks = []
+        self.alerts = [print]
         self.last_time = None
         self.running = False
-
-    def alert(self):
-        ## gather offending observers
-        out_of_threshold = [obs.name for obs in self.observers.values() if not obs.in_threshold]
-        print(f'Observers {out_of_threshold} are out of threshold!')
 
     @property
     def in_threshold(self):
@@ -83,6 +79,10 @@ class Monitor():
         ''' Add an extension by registering its update() method as a callback '''
         self.callbacks.append(extension.update)
 
+    def add_alert(self, alert):
+        ''' Add an alert by registering its send() method as a callback '''
+        self.alerts.append(alert.send)
+
     def check(self):
         ''' Check all attached watchers and optionally log the result, update
             the plot, and/or call the callback.
@@ -120,6 +120,12 @@ class Monitor():
 
         for callback in self.callbacks:
             callback(data)
+
+    def alert(self):
+        out_of_threshold = [obs.name for obs in self.observers.values() if not obs.in_threshold]
+        msg = f'Observers {out_of_threshold} are out of threshold!'
+        for alert in self.alerts:
+            alert(msg)
 
     def log(self, data):
         ''' Append the latest measurement to file. If the file does not exist,
