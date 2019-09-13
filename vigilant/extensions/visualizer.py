@@ -4,12 +4,12 @@ import plotly.graph_objs as go
 
 class Visualizer():
     ''' Handles plotting in Jupyter notebooks using Plotly. '''
-    def __init__(self):
+    def __init__(self, max_points=100):
+        self.max_points = max_points
         layout = go.Layout(
             xaxis={'title': 'Time'},
             yaxis={'title': 0}
         )
-
         self.fig = go.FigureWidget([], layout=layout)
         display(self.fig)
 
@@ -17,11 +17,7 @@ class Visualizer():
         ''' Add a new trace to the plot corresponding to a name string in
             self.data.columns.
         '''
-        self.fig.add_trace(go.Scatter(y=[],
-                                      x=[],
-                                      mode='markers',
-                                      name=name
-                                      ))
+        self.fig.add_trace(go.Scatter(y=[], x=[], mode='markers', name=name))
 
     def refresh(self):
         ''' Redraw the plot using data from self.data. More computationally
@@ -43,5 +39,5 @@ class Visualizer():
                 self.add_trace(col)
 
         for plot in self.fig.data:
-            plot['x'] = np.append(plot['x'], data.index.values)
-            plot['y'] = np.append(plot['y'], data[plot['name']].values)
+            plot['x'] = np.append(plot['x'], data.index.values)[-self.max_points::]
+            plot['y'] = np.append(plot['y'], data[plot['name']].values)[-self.max_points::]
