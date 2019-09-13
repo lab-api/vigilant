@@ -1,36 +1,76 @@
 from vigilant import Monitor
 from vigilant.extensions import Publisher
+from hypothesis import given
+import hypothesis.strategies as st
 import time
+import os
 import numpy as np
 import pandas as pd
-import os
 
-def read_voltage():
-    return 2.13
-
-# def test_listen():
-#     m = Monitor()
-#     m.listen('data feed', address='127.0.0.1:9000')
-#
-#     feed = Publisher('127.0.0.1:9000')
-#     time.sleep(3)
-#     feed.update(3.14)
-#     time.sleep(3)
-#     m.check()
-#
-#     m.listeners['data feed'].stop()
-#     assert m.data.iloc[0]['data feed'] == 3.14
-
-def test_watch():
+def test_listen_watch_check():
+    addr = '127.0.0.1:5002'
+    publisher = Publisher(addr)
     m = Monitor()
-    m.watch(read_voltage)
-    m.check()
 
-    assert m.data.iloc[0]['read_voltage'] == 2.13
+    def placeholder():
+        return None
 
-def test_jitter():
+    m.watch(placeholder, name='measure_x', threshold=(0, 1))
+    m.listen('measure_y', addr, threshold=(0, 1))
+
+    listener = m.observers['measure_y']
+    while listener.queue.empty():
+        publisher.update(1)
+    listener.measure()   # flush queue
+
+    @given(st.floats(), st.floats())
+    def test_check(x, y):
+        # reset threshold checks to avoid contamination from previous test
+        m.in_threshold = True
+        m.observers['measure_x'].in_threshold = True
+        m.observers['measure_y'].in_threshold = True
+
+
+        def measure_x():
+            return x
+
+        m.observers['measure_x']._measure = measure_x
+        publisher.update(y)
+        time.sleep(0.1)
+
+        m.check()
+
+        x_good = m.observers['measure_x'].in_threshold
+        y_good = m.observers['measure_y'].in_threshold
+
+        assert m.in_threshold == (x_good & y_good)
+
+    test_check()
+    listener.stop()
+    publisher.socket.close()
+
+def test_logging():
+    def read_integer():
+        return np.random.randint(0, 10)
+
+    if os.path.exists("test.csv"):
+      os.remove("test.csv")
+
+    m = Monitor(filename='test.csv')
+    m.watch(read_integer)
+    for i in range(3):
+        m.check()
+        time.sleep(0.1)
+
+    loaded = pd.read_csv('test.csv', index_col=0)
+    assert ((loaded-m.data).dropna()==0)['read_integer'].all()
+    os.remove("test.csv")
+
+def test_periodic():
+    def read_integer():
+        return np.random.randint(0, 10)
     m = Monitor()
-    m.watch(read_voltage)
+    m.watch(read_integer)
 
     m.start(period=0.1)
 
@@ -44,10 +84,11 @@ def test_jitter():
     assert np.abs(np.mean(delta)-0.1) < np.std(delta)
 
 def test_triggering():
+    def read_integer():
+        return np.random.randint(0, 10)
     m = Monitor()
-    m.watch(read_voltage)
+    m.watch(read_integer)
 
-    import time
     def trigger():
         time.sleep(.1)
         return
@@ -61,35 +102,3 @@ def test_triggering():
 
     delta = pd.TimedeltaIndex(delta).microseconds/1e6 + pd.TimedeltaIndex(delta).seconds
     assert np.abs(np.mean(delta)-0.1) < np.std(delta)
-
-def test_react():
-    ## test lower threshold failing
-    m = Monitor()
-    m.watch(read_voltage, threshold=(3, None), reaction=m.stop)
-    m.start(period=0.1)
-    time.sleep(0.2)
-    assert not m.running
-
-    ## test upper threshold failing
-    m = Monitor()
-    m.watch(read_voltage, threshold=(None, 1), reaction=m.stop)
-    m.start(period=0.1)
-    time.sleep(0.2)
-    assert not m.running
-
-def test_logging():
-    def read_integer():
-        return np.random.randint(0, 10)
-
-    if os.path.exists("test.csv"):
-      os.remove("test.csv")
-
-    m = Monitor(filename='test.csv')
-    m.watch(read_integer)
-    m.start(period=0.1)
-    time.sleep(1)
-    m.stop()
-
-    loaded = pd.read_csv('test.csv', index_col=0)
-    assert ((loaded-m.data).dropna()==0)['read_integer'].all()
-    os.remove("test.csv")
