@@ -13,33 +13,27 @@ class Monitor():
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
     def __init__(self, filename=None, resampling_interval='1s'):
-        ''' Args:
-                filename (str): optional filename for logging
         '''
-        self.resampling_interval = resampling_interval
-        self.observers = {}
+        Args:
+            filename (str): optional filename for logging
+            resampling_interval (str): interval with which to bin incoming data.
+                                       Value should be formatted as a pandas
+                                       offset alias, e.g. '1s' for resampling to
+                                       one second intervals. Pass None to disable
+                                       resampling.
+        '''
         self.filename = filename
-        self.scheduler = sched.scheduler(time.time, time.sleep)
+        self.resampling_interval = resampling_interval
+
+        self.observers = {}
+        self.callbacks = []
+        self.alerts = []
 
         self.data = pd.DataFrame()
         self.data.index.rename('Timestamp', inplace=True)
 
-        self._in_threshold = True     # assume all states are good to start
-        self.callbacks = []
-        self.alerts = [print]
-        self.last_time = None
         self.running = False
-
-    @property
-    def in_threshold(self):
-        return self._in_threshold
-
-    @in_threshold.setter
-    def in_threshold(self, tf):
-        if self.in_threshold and not tf:
-            self.alert()
-
-        self._in_threshold = tf
+        self.in_threshold = True
 
     def watch(self, experiment, name=None, threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
@@ -91,11 +85,9 @@ class Monitor():
             If a value is out of threshold, enter the Alert state.
         '''
         new_data = pd.DataFrame()
-
         now = datetime.datetime.now().isoformat()
 
         all_in_threshold = True
-
         for name, observer in self.observers.items():
             observation = observer.measure()
             if len(observation) != 0:
@@ -105,25 +97,24 @@ class Monitor():
         if len(new_data) == 0:
             return
 
+        ## bin data into new interval and append to dataset
         if self.resampling_interval is not None:
             new_data = self.resample(new_data, freq=self.resampling_interval)
-
-        self.in_threshold &= all_in_threshold
-
         new_data.sort_index(inplace=True)
         self.data = self.data.append(new_data, sort=False)
 
-        self.process(new_data)
+        ## raise alerts if an unlock is detected
+        if self.in_threshold and not all_in_threshold:
+            self.alert()
+        self.in_threshold = all_in_threshold
 
-        return new_data
-
-    def process(self, data):
-        ''' Logs data and sends it to extensions '''
         if self.filename is not None:
-            self.log(data)
+            self.log(new_data, self.filename)
 
         for callback in self.callbacks:
-            callback(data)
+            callback(new_data)
+
+        return new_data
 
     @staticmethod
     def resample(data, freq='1s'):
@@ -140,16 +131,29 @@ class Monitor():
         for alert in self.alerts:
             alert(msg)
 
-    def log(self, data):
+    @staticmethod
+    def log(data, filename):
         ''' Append the latest measurement to file. If the file does not exist,
             headers matching the columns in self.data are written first.
             Args:
                 data (pandas.DataFrame): the most recent measurement
         '''
-        if not os.path.isfile(self.filename):
-            data.to_csv(self.filename, header=True)
+        if not os.path.isfile(filename):
+            data.to_csv(filename, header=True)
         else:
-            data.to_csv(self.filename, mode='a', header=False)
+            data.to_csv(filename, mode='a', header=False)
+
+    def start(self, period=None, trigger=None):
+        ''' Start acquisition in either periodic or triggered mode, depending on
+            which argument is passed.
+        '''
+        if trigger is None and period is not None:
+            thread = Thread(target=self.start_periodic, args=(period,))
+        elif period is None and trigger is not None:
+            thread = Thread(target=self.start_triggered, args=(trigger,))
+        else:
+            raise Exception('Pass either a period or a trigger to Monitor.start().')
+        thread.start()
 
     def start_triggered(self, trigger):
         ''' Start acquisition in triggered mode.
@@ -171,26 +175,14 @@ class Monitor():
                 period (float): the repetition time in seconds
         '''
         self.running = True
-        if self.last_time is None:
-            self.last_time = time.time()
-        while self.running:
-            self.scheduler.enterabs(self.last_time, 1, self.check)
-            self.last_time += period
-            self.scheduler.run()
+        scheduler = sched.scheduler(time.time, time.sleep)
 
-    def start(self, period=None, trigger=None):
-        ''' Start acquisition in either periodic or triggered mode, depending on
-            which argument is passed.
-        '''
-        if trigger is None and period is not None:
-            thread = Thread(target=self.start_periodic, args=(period,))
-        elif period is None and trigger is not None:
-            thread = Thread(target=self.start_triggered, args=(trigger,))
-        else:
-            raise Exception('Pass either a period or a trigger to Monitor.start().')
-        thread.start()
+        last_time = time.time()
+        while self.running:
+            scheduler.enterabs(last_time, 1, self.check)
+            last_time += period
+            scheduler.run()
 
     def stop(self):
         ''' Stop acquisition. '''
         self.running = False
-        self.last_time = None
