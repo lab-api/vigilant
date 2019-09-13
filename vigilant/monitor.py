@@ -12,10 +12,11 @@ class Monitor():
         Monitor.add_extension() method, adding features like realtime plotting,
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, resampling_interval='1s'):
         ''' Args:
                 filename (str): optional filename for logging
         '''
+        self.resampling_interval = resampling_interval
         self.observers = {}
         self.filename = filename
         self.scheduler = sched.scheduler(time.time, time.sleep)
@@ -104,6 +105,9 @@ class Monitor():
         if len(new_data) == 0:
             return
 
+        if self.resampling_interval is not None:
+            new_data = self.resample(new_data, freq=self.resampling_interval)
+
         self.in_threshold &= all_in_threshold
 
         new_data.sort_index(inplace=True)
@@ -121,7 +125,8 @@ class Monitor():
         for callback in self.callbacks:
             callback(data)
 
-    def resample(self, data, freq='1s'):
+    @staticmethod
+    def resample(data, freq='1s'):
         ''' Bin observations into the passed frequency '''
         data.index = pd.DatetimeIndex(data.index)   # convert to datetime index for resampling
         data = data.reset_index().groupby(pd.Grouper(key='index', freq=freq)).mean()  # resample
