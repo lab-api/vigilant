@@ -12,7 +12,7 @@ class Monitor():
         Monitor.add_extension() method, adding features like realtime plotting,
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None, resampling_interval='1s'):
+    def __init__(self, filename=None, resampling_interval='1s', max_points=65536):
         '''
         Args:
             filename (str): optional filename for logging
@@ -22,6 +22,7 @@ class Monitor():
                                        one second intervals. Pass None to disable
                                        resampling.
         '''
+        self.max_points = max_points
         self.filename = filename
         self.resampling_interval = resampling_interval
 
@@ -102,6 +103,11 @@ class Monitor():
             new_data = self.resample(new_data, freq=self.resampling_interval)
         new_data.sort_index(inplace=True)
         self.data = self.data.append(new_data, sort=False)
+
+        ## trim to chosen maximum length of data in memory
+        overflow = len(self.data) - self.max_points
+        if overflow > 0:
+            self.data.drop(self.data.head(overflow).index, inplace=True)
 
         ## raise alerts if an unlock is detected
         if self.in_threshold and not all_in_threshold:
