@@ -69,7 +69,10 @@ class Watcher(Observer):
             values reported in the user-defined function itself.
         '''
         now = datetime.datetime.now().isoformat()
-        return pd.DataFrame(self._measure(), index=[now], columns=[self.name])
+        result = self._measure()
+        if isinstance(result, pd.DataFrame):
+            return result
+        return pd.DataFrame(result, index=[now], columns=[self.name])
 
 class Listener(Observer):
     def __init__(self, name, address, threshold=(None, None), reaction=None):
