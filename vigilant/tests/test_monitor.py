@@ -69,10 +69,10 @@ def test_logging():
 def test_periodic():
     def read_integer():
         return np.random.randint(0, 10)
-    m = Monitor()
+    m = Monitor(period=0.1)
     m.watch(read_integer)
 
-    m.start(period=0.1)
+    m.start()
 
     time.sleep(5)
     m.stop()
@@ -86,13 +86,14 @@ def test_periodic():
 def test_triggering():
     def read_integer():
         return np.random.randint(0, 10)
-    m = Monitor()
-    m.watch(read_integer)
-
     def trigger():
         time.sleep(.1)
         return
-    m.start(trigger=trigger)
+    m = Monitor(trigger=trigger)
+    m.watch(read_integer)
+
+
+    m.start()
 
     time.sleep(5)
     m.stop()

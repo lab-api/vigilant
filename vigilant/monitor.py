@@ -12,7 +12,7 @@ class Monitor():
         Monitor.add_extension() method, adding features like realtime plotting,
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None, resampling_interval='1s', max_points=65536):
+    def __init__(self, filename=None, period=None, trigger=None, resampling_interval='1s', max_points=65536):
         '''
         Args:
             filename (str): optional filename for logging
@@ -24,6 +24,8 @@ class Monitor():
         '''
         self.max_points = max_points
         self.filename = filename
+        self.period = period
+        self.trigger = trigger
         self.resampling_interval = resampling_interval
 
         self.observers = {}
@@ -149,14 +151,14 @@ class Monitor():
         else:
             data.to_csv(filename, mode='a', header=False)
 
-    def start(self, period=None, trigger=None):
+    def start(self):
         ''' Start acquisition in either periodic or triggered mode, depending on
-            which argument is passed.
+            which argument is passed when instantiating the Monitor.
         '''
-        if trigger is None and period is not None:
-            thread = Thread(target=self.start_periodic, args=(period,))
-        elif period is None and trigger is not None:
-            thread = Thread(target=self.start_triggered, args=(trigger,))
+        if self.trigger is None and self.period is not None:
+            thread = Thread(target=self.start_periodic, args=(self.period,))
+        elif self.period is None and self.trigger is not None:
+            thread = Thread(target=self.start_triggered, args=(self.trigger,))
         else:
             raise Exception('Pass either a period or a trigger to Monitor.start().')
         thread.start()
