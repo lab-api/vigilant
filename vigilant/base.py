@@ -68,7 +68,7 @@ class Watcher(Observer):
             single-row DataFrame. Future development will allow timestamped
             values reported in the user-defined function itself.
         '''
-        now = datetime.datetime.now().isoformat()
+        now = datetime.datetime.utcnow().isoformat()
         result = self._measure()
         if isinstance(result, pd.DataFrame):
             return result
@@ -94,7 +94,7 @@ class Listener(Observer):
 
         while True:
             value = subscriber.receive()
-            now = datetime.datetime.now().isoformat()
+            now = datetime.datetime.utcnow().isoformat()
             self.queue.put(pd.DataFrame(value, index=[now], columns=[name]))
 
     def measure(self):

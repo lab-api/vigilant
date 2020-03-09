@@ -88,7 +88,7 @@ class Monitor():
             If a value is out of threshold, enter the Alert state.
         '''
         new_data = pd.DataFrame()
-        now = datetime.datetime.now().isoformat()
+        now = datetime.datetime.utcnow().isoformat()
 
         all_in_threshold = True
         for name, observer in self.observers.items():
