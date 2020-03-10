@@ -78,7 +78,7 @@ def test_periodic():
     m.stop()
 
     index = pd.DatetimeIndex(m.data.index).to_series()
-    delta = (index-index.shift(1)).fillna(0)
+    delta = (index-index.shift(1)).fillna(pd.Timedelta(seconds=0))
 
     delta = pd.TimedeltaIndex(delta).microseconds/1e6 + pd.TimedeltaIndex(delta).seconds
     assert np.abs(np.mean(delta)-0.1) < np.std(delta)
@@ -99,7 +99,7 @@ def test_triggering():
     m.stop()
 
     index = pd.DatetimeIndex(m.data.index).to_series()
-    delta = (index-index.shift(1)).fillna(0)
+    delta = (index-index.shift(1)).fillna(pd.Timedelta(seconds=0))
 
     delta = pd.TimedeltaIndex(delta).microseconds/1e6 + pd.TimedeltaIndex(delta).seconds
     assert np.abs(np.mean(delta)-0.1) < np.std(delta)
