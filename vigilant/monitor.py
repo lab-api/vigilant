@@ -34,7 +34,7 @@ class Monitor():
         self.period = period
         self.trigger = trigger
 
-        self.observers = {}
+        self.categories = {'default': {}}
         self.callbacks = []
         self.alerts = []
 
@@ -51,6 +51,7 @@ class Monitor():
             self.add_extension(FileLogger(filename=filename))
 
     def watch(self, experiment, name=None, threshold=(None, None), reaction=None):
+    def watch(self, experiment, name=None, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
             results with each measurement cycle).
             Args:
@@ -65,11 +66,13 @@ class Monitor():
         '''
         if name is None:
             name = experiment.__name__
-        self.observers[name] = Watcher(name, experiment,
-                                      threshold=threshold,
-                                      reaction=reaction)
-
-    def listen(self, name, address, threshold=(None, None), reaction=None):
+        if category not in self.categories:
+            self.categories[category] = {}
+        name = category + '/' + name
+        self.categories[category][name] = Watcher(name, experiment,
+                                                 threshold=threshold,
+                                                 reaction=reaction)
+    def listen(self, name, address, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored passively (initiated from the variable,
             not the monitor).
             Args:
@@ -80,8 +83,10 @@ class Monitor():
                 reaction (function): optional action to take when the variable
                                      exits defined thresholds.
         '''
-
-        self.observers[name] = Listener(name, address,
+        if category not in self.categories:
+            self.categories[category] = {}
+        name = category + '/' + name
+        self.categories[category][name] = Listener(name, address,
                                         threshold=threshold,
                                         reaction=reaction)
 
@@ -103,11 +108,12 @@ class Monitor():
         now = datetime.datetime.utcnow().isoformat()
 
         all_in_threshold = True
-        for name, observer in self.observers.items():
-            observation = observer.measure()
-            if len(observation) != 0:
-                new_data = new_data.append(observation, sort=False)
-                all_in_threshold &= observer.compare(observation)
+        for category in self.categories:
+            for name, observer in self.categories[category].items():
+                observation = observer.measure()
+                if len(observation) != 0:
+                    new_data = new_data.append(observation, sort=False)
+                    all_in_threshold &= observer.compare(observation)
 
         if len(new_data) == 0:
             return

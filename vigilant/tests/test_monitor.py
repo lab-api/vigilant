@@ -18,7 +18,7 @@ def test_listen_watch_check():
     m.watch(placeholder, name='measure_x', threshold=(0, 1))
     m.listen('measure_y', addr, threshold=(0, 1))
 
-    listener = m.observers['measure_y']
+    listener = m.categories['default']['measure_y']
     while listener.queue.empty():
         publisher.update(1)
     listener.measure()   # flush queue
@@ -27,21 +27,21 @@ def test_listen_watch_check():
     def test_check(x, y):
         # reset threshold checks to avoid contamination from previous test
         m.in_threshold = True
-        m.observers['measure_x'].in_threshold = True
-        m.observers['measure_y'].in_threshold = True
+        m.categories['default']['measure_x'].in_threshold = True
+        m.categores['default']['measure_y'].in_threshold = True
 
 
         def measure_x():
             return x
 
-        m.observers['measure_x']._measure = measure_x
+        m.categories['default']['measure_x']._measure = measure_x
         publisher.update(y)
         time.sleep(0.1)
 
         m.check()
 
-        x_good = m.observers['measure_x'].in_threshold
-        y_good = m.observers['measure_y'].in_threshold
+        x_good = m.categories['default']['measure_x'].in_threshold
+        y_good = m.categories['default']['measure_y'].in_threshold
 
         assert m.in_threshold == (x_good & y_good)
 
@@ -63,7 +63,7 @@ def test_logging():
         time.sleep(0.1)
 
     loaded = pd.read_csv('test.csv', index_col=0)
-    assert ((loaded-m.data).dropna()==0)['read_integer'].all()
+    assert ((loaded-m.data).dropna()==0)['default/read_integer'].all()
     os.remove("test.csv")
 
 def test_periodic():
