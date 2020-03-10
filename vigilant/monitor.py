@@ -5,6 +5,7 @@ import os
 from threading import Thread
 import pandas as pd
 from vigilant import config, Watcher, Listener
+from vigilant.extensions import InfluxClient, FileLogger
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -12,10 +13,15 @@ class Monitor():
         Monitor.add_extension() method, adding features like realtime plotting,
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None, period=None, trigger=None):
+    def __init__(self, filename=None, period=None, trigger=None, measurement=None):
         '''
         Args:
-            filename (str): optional filename for logging
+            period (float): sampling period.
+            trigger (function): a function which blocks until sampling time, then
+                                returns. Either a trigger or a period should be
+                                defined, but not both.
+            filename (str): optional filename for logging to CSV
+            measurement (str): optional measurement name for logging to InfluxDB
 
         Config options (entries in config.yml):
             max points (int): number of points to store in memory (FIFO basis).
@@ -25,8 +31,6 @@ class Monitor():
                                        one second intervals. Leave blank to disable
                                        resampling.
         '''
-
-        self.filename = filename
         self.period = period
         self.trigger = trigger
 
@@ -39,6 +43,12 @@ class Monitor():
 
         self.running = False
         self.in_threshold = True
+
+        if measurement is not None:
+            self.add_extension(InfluxClient(measurement='test'))
+
+        if filename is not None:
+            self.add_extension(FileLogger(filename=filename))
 
     def watch(self, experiment, name=None, threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
@@ -118,9 +128,6 @@ class Monitor():
             self.alert()
         self.in_threshold = all_in_threshold
 
-        if self.filename is not None:
-            self.log(new_data, self.filename)
-
         for callback in self.callbacks:
             callback(new_data)
 
@@ -140,18 +147,6 @@ class Monitor():
         msg = f'Observers {out_of_threshold} are out of threshold!'
         for alert in self.alerts:
             alert(msg)
-
-    @staticmethod
-    def log(data, filename):
-        ''' Append the latest measurement to file. If the file does not exist,
-            headers matching the columns in self.data are written first.
-            Args:
-                data (pandas.DataFrame): the most recent measurement
-        '''
-        if not os.path.isfile(filename):
-            data.to_csv(filename, header=True)
-        else:
-            data.to_csv(filename, mode='a', header=False)
 
     def start(self):
         ''' Start acquisition in either periodic or triggered mode, depending on
