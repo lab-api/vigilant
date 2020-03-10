@@ -4,7 +4,7 @@ import sched
 import os
 from threading import Thread
 import pandas as pd
-from vigilant import Watcher, Listener
+from vigilant import config, Watcher, Listener
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -12,21 +12,23 @@ class Monitor():
         Monitor.add_extension() method, adding features like realtime plotting,
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None, period=None, trigger=None, resampling_interval='1s', max_points=65536):
+    def __init__(self, filename=None, period=None, trigger=None):
         '''
         Args:
             filename (str): optional filename for logging
-            resampling_interval (str): interval with which to bin incoming data.
+
+        Config options (entries in config.yml):
+            max points (int): number of points to store in memory (FIFO basis).
+            resampling interval (str): interval with which to bin incoming data.
                                        Value should be formatted as a pandas
                                        offset alias, e.g. '1s' for resampling to
-                                       one second intervals. Pass None to disable
+                                       one second intervals. Leave blank to disable
                                        resampling.
         '''
-        self.max_points = max_points
+
         self.filename = filename
         self.period = period
         self.trigger = trigger
-        self.resampling_interval = resampling_interval
 
         self.observers = {}
         self.callbacks = []
@@ -101,13 +103,13 @@ class Monitor():
             return
 
         ## bin data into new interval and append to dataset
-        if self.resampling_interval is not None:
-            new_data = self.resample(new_data, freq=self.resampling_interval)
+        if config['monitor']['resampling interval'] is not None:
+            new_data = self.resample(new_data, freq=config['monitor']['resampling interval'])
         new_data.sort_index(inplace=True)
         self.data = self.data.append(new_data, sort=False)
 
         ## trim to chosen maximum length of data in memory
-        overflow = len(self.data) - self.max_points
+        overflow = len(self.data) - config['monitor']['max points']
         if overflow > 0:
             self.data.drop(self.data.head(overflow).index, inplace=True)
 

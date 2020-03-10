@@ -1,0 +1,11 @@
+monitor:
+  resampling interval: '1s'
+  max points: 65536
+influx:
+  address: localhost
+  port: 8086
+  database: vigilant
+grafana:
+  address: localhost
+  port: 3000
+  api key: 'eyJrIjoiN3Jua2Q3d0JYVEpuUU0wZk9EV09DdWo4c1YwWjJPWGQiLCJuIjoiRGFzaGJvYXJkIGdlbmVyYXRvciIsImlkIjoxfQ=='

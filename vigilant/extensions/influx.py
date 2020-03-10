@@ -1,10 +1,11 @@
 import pandas as pd
 import requests
+from vigilant import config
 
 class InfluxClient:
-    def __init__(self, database, measurement, addr='localhost', port=8086):
-        self.address = f'http://{addr}:{port}'
-        self.database = database
+    def __init__(self, measurement):
+        self.address = f"http://{config['influx']['address']}:{config['influx']['port']}"
+        self.database = config['influx']['database']
         self.measurement = measurement
 
         if not self.database in self.list_databases():

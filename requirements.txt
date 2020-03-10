@@ -2,3 +2,4 @@ pandas
 numpy
 zmq
 requests
+pyyaml
