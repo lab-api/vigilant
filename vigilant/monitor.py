@@ -5,7 +5,7 @@ import os
 from threading import Thread
 import pandas as pd
 from vigilant import config, Watcher, Listener
-from vigilant.extensions import InfluxClient, FileLogger
+from vigilant.extensions import InfluxClient, FileLogger, Generator
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -13,7 +13,7 @@ class Monitor():
         Monitor.add_extension() method, adding features like realtime plotting,
         ZeroMQ pub/sub feeds, and writing to an Influx database.
     '''
-    def __init__(self, filename=None, period=None, trigger=None, measurement=None):
+    def __init__(self, filename=None, period=None, trigger=None, measurement=None, dashboard=None):
         '''
         Args:
             period (float): sampling period.
@@ -44,13 +44,17 @@ class Monitor():
         self.running = False
         self.in_threshold = True
 
+        self.measurement = measurement
         if measurement is not None:
             self.add_extension(InfluxClient(measurement='test'))
 
         if filename is not None:
             self.add_extension(FileLogger(filename=filename))
 
-    def watch(self, experiment, name=None, threshold=(None, None), reaction=None):
+        self.dashboard = dashboard
+        if self.dashboard is not None:
+            self.generator = Generator(self)
+
     def watch(self, experiment, name=None, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
             results with each measurement cycle).
@@ -72,6 +76,11 @@ class Monitor():
         self.categories[category][name] = Watcher(name, experiment,
                                                  threshold=threshold,
                                                  reaction=reaction)
+        if self.dashboard is not None:
+            self.generator.generate()
+            self.generator.post()
+
+
     def listen(self, name, address, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored passively (initiated from the variable,
             not the monitor).
@@ -89,6 +98,9 @@ class Monitor():
         self.categories[category][name] = Listener(name, address,
                                         threshold=threshold,
                                         reaction=reaction)
+        if self.dashboard is not None:
+            self.generator.generate()
+            self.generator.post()
 
     def add_extension(self, extension):
         ''' Add an extension by registering its update() method as a callback '''
