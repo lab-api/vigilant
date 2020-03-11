@@ -21,6 +21,11 @@ class InfluxClient:
         dbs = r['results'][0]['series'][0]['values']
         return [x[0] for x in dbs]
 
+    def query(self, q):
+        params = {'q': q}
+        r = requests.get(f'{self.address}/query', params=params).json()
+        return r
+
     def update(self, data):
         ''' Writes a set of points to the database '''
         data.index = pd.to_datetime(data.index)
