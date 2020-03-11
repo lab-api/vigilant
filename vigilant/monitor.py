@@ -78,7 +78,7 @@ class Monitor():
                                                  reaction=reaction)
         if self.dashboard_title is not None:
             self.dashboard.download()
-            self.dashboard.add_panel(name, category, overwrite=False)
+            self.dashboard.add_panel(name, category, bounds=threshold, overwrite=False)
             self.dashboard.render()
             self.dashboard.post()
 
@@ -101,7 +101,7 @@ class Monitor():
                                         reaction=reaction)
         if self.dashboard_title is not None:
             self.dashboard.download()
-            self.dashboard.add_panel(name, category, overwrite=False)
+            self.dashboard.add_panel(name, category, bounds=threshold, overwrite=False)
             self.dashboard.render()
             self.dashboard.post()
 

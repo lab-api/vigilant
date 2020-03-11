@@ -23,25 +23,23 @@ class Dashboard:
         if title in self.rows and not overwrite:
             return
         id = len(self.rows) + len(self.panels)
-        self.rows[title] = {'children': []}
-        self.rows[title]['model'] = Row(title, id).template()
+        self.rows[title] = Row(title, id)
 
-    def add_panel(self, title, row, overwrite=False):
+    def add_panel(self, title, row, bounds=None, overwrite=False):
         field = row + '/' + title
         if row not in self.rows:
             self.add_row(row)
-        if field in self.rows[row]['children'] and not overwrite:
+        if field in self.rows[row].children and not overwrite:
             return
         id = len(self.rows) + len(self.panels)
-        self.panels[field] = {'parent': row}
-        siblings = self.rows[row]['children'].copy()
-        self.rows[row]['children'].append(field)
+        siblings = self.rows[row].children.copy()
+        self.rows[row].children.append(field)
 
         ## determine positioning
         x = (len(siblings) % self.panels_per_row) * self.panel_width
         y = (int(np.floor(len(siblings) / self.panels_per_row))) * self.row_width
-        panel = Panel(title, self.measurement, field, id, x, y, self.panel_width, self.panel_height)
-        self.panels[field]['model'] = panel.template()
+        panel = Panel(title, self.measurement, field, id, x, y, self.panel_width, self.panel_height, bounds=bounds)
+        self.panels[field] = panel
 
     def build_schema(self):
         self.rows = {}
@@ -49,12 +47,12 @@ class Dashboard:
 
         for item in self.model['panels']:
             if item['type'] == 'row':
-                self.rows[item['title']] = {'children': [], 'model': item}
+                self.rows[item['title']] = Row.load(item)
             else:
                 last_row_name = list(self.rows.keys())[-1]
                 field = last_row_name + '/' + item['title']
-                self.rows[last_row_name]['children'].append(field)
-                self.panels[field] = {'parent': last_row_name, 'model': item}
+                self.rows[last_row_name].children.append(field)
+                self.panels[field] = Panel.load(item)
 
     def download(self):
         ''' Attempt to download the dashboard matching the passed uid '''
@@ -80,10 +78,10 @@ class Dashboard:
     def render(self):
         panels = []
         for row_id, row in self.rows.items():
-            panels.append(row['model'])
+            panels.append(row.model())
 
-            for panel_id in row['children']:
-                panels.append(self.panels[panel_id]['model'])
+            for panel_id in row.children:
+                panels.append(self.panels[panel_id].model())
 
         self.model['panels'] = panels
 
@@ -119,8 +117,13 @@ class Row:
     def __init__(self, title, id):
         self.title = title
         self.id = id
+        self.children = []
 
-    def template(self):
+    @staticmethod
+    def load(model):
+        return Row(model['title'], model['id'])
+
+    def model(self):
         return {
           "collapsed": "false",
           "datasource": "null",
@@ -137,7 +140,7 @@ class Row:
         }
 
 class Panel:
-    def __init__(self, title, measurement, field, id, x, y, w, h):
+    def __init__(self, title, measurement, field, id, x, y, w, h, bounds=None):
         self.title = title
         self.measurement = measurement
         self.field = field
@@ -146,9 +149,26 @@ class Panel:
         self.y = y
         self.w = w
         self.h = h
+        self.bounds = bounds
 
+    @staticmethod
+    def load(model):
+        ''' Build a Panel instance from a JSON model '''
+        title = model['title']
+        measurement = model['targets'][0]['measurement']
+        field = model['targets'][0]['select'][0][0]['params'][0]
+        id = model['id']
+        x = model['gridPos']['x']
+        y = model['gridPos']['y']
+        w = model['gridPos']['w']
+        h = model['gridPos']['h']
+        bounds = None
+        if 'alert' in model:
+            bounds = model['alert']['conditions'][0]['evaluator']['params']
 
-    def template(self):
+        return Panel(title, measurement, field, id, x, y, w, h, bounds)
+
+    def model(self):
         target = {
                   "groupBy": [],
                   "measurement": self.measurement,
@@ -168,8 +188,37 @@ class Panel:
                   ],
                   "tags": []
                 }
+        alert = {}
+        thresholds = []
+        if self.bounds is not None:
+            alert = {'alertRuleTags': {},
+             'conditions': [{'evaluator': {'params': self.bounds, 'type': 'outside_range'},
+               'operator': {'type': 'and'},
+               'query': {'params': ['A', '1s', 'now']},
+               'reducer': {'params': [], 'type': 'avg'},
+               'type': 'query'}],
+             'executionErrorState': 'alerting',
+             'for': '5s',
+             'frequency': '1s',
+             'handler': 1,
+             'name': f'{self.title} alert',
+             'noDataState': 'no_data',
+             'notifications': []}
+
+        thresholds = [{'colorMode': 'critical',
+                        'fill': 'true',
+                        'line': 'true',
+                        'op': 'lt',
+                        'value': self.bounds[0]},
+                       {'colorMode': 'critical',
+                        'fill': 'true',
+                        'line': 'true',
+                        'op': 'gt',
+                        'value': self.bounds[1]}]
 
         return {
+              "alert": alert,
+              "thresholds": thresholds,
               "gridPos": {
                 "h": self.h,
                 "w": self.w,
