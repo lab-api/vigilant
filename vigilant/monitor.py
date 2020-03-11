@@ -44,7 +44,7 @@ class Monitor():
 
         self.measurement = measurement
         if measurement is not None:
-            self.add_extension(InfluxClient(measurement='test'))
+            self.add_extension(InfluxClient(measurement=self.measurement))
 
         if filename is not None:
             self.add_extension(FileLogger(filename=filename))
