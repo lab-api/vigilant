@@ -54,6 +54,7 @@ class Monitor():
         self.dashboard = dashboard
         if self.dashboard is not None:
             self.generator = Generator(self)
+            self.generator.generate()
 
     def watch(self, experiment, name=None, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
@@ -78,7 +79,6 @@ class Monitor():
                                                  reaction=reaction)
         if self.dashboard is not None:
             self.generator.generate()
-            self.generator.post()
 
 
     def listen(self, name, address, category='default', threshold=(None, None), reaction=None):
@@ -100,7 +100,6 @@ class Monitor():
                                         reaction=reaction)
         if self.dashboard is not None:
             self.generator.generate()
-            self.generator.post()
 
     def add_extension(self, extension):
         ''' Add an extension by registering its update() method as a callback '''
