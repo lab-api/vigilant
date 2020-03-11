@@ -16,7 +16,7 @@ def make_dashboard(title='Dashboard'):
           }
         ]
       },
-      "id": 'null',
+      "id": 'vigilant-dashboard',
       "panels": [],
       "refresh": "1s",
       "schemaVersion": 22,
@@ -24,7 +24,7 @@ def make_dashboard(title='Dashboard'):
       "timepicker": {"refresh_intervals": ["1s", "10s", "1m", "10m"]},
       "timezone": "browser",
       "title": title,
-      "uid": 'null',
+      "uid": 'vigilant-dashboard',
       "version": 0
     }
     return dashboard
