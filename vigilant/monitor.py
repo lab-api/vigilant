@@ -36,13 +36,11 @@ class Monitor():
 
         self.categories = {'default': {}}
         self.callbacks = {}
-        self.alerts = []
 
         self.data = pd.DataFrame()
         self.data.index.rename('Timestamp', inplace=True)
 
         self.running = False
-        self.in_threshold = True
 
         self.measurement = measurement
         if measurement is not None:
@@ -111,10 +109,6 @@ class Monitor():
         ''' Add an extension by registering its update() method as a callback '''
         self.callbacks[extension.__class__] = extension.update
 
-    def add_alert(self, alert):
-        ''' Add an alert by registering its send() method as a callback '''
-        self.alerts.append(alert.send)
-
     def check(self):
         ''' Check all attached watchers and optionally log the result, update
             the plot, and/or call the callback.
@@ -124,13 +118,11 @@ class Monitor():
         new_data = pd.DataFrame()
         now = datetime.datetime.utcnow().isoformat()
 
-        all_in_threshold = True
         for category in self.categories:
             for name, observer in self.categories[category].items():
                 observation = observer.measure()
                 if len(observation) != 0:
                     new_data = new_data.append(observation, sort=False)
-                    all_in_threshold &= observer.compare(observation)
 
         if len(new_data) == 0:
             return
@@ -146,11 +138,6 @@ class Monitor():
         if overflow > 0:
             self.data.drop(self.data.head(overflow).index, inplace=True)
 
-        ## raise alerts if an unlock is detected
-        if self.in_threshold and not all_in_threshold:
-            self.alert()
-        self.in_threshold = all_in_threshold
-
         for callback in self.callbacks.values():
             callback(new_data)
 
@@ -164,12 +151,6 @@ class Monitor():
         data.index = data.index.strftime('%Y-%m-%dT%H:%M:%S.%f')  # convert back to string index
 
         return data
-
-    def alert(self):
-        out_of_threshold = [obs.name for obs in self.observers.values() if not obs.in_threshold]
-        msg = f'Observers {out_of_threshold} are out of threshold!'
-        for alert in self.alerts:
-            alert(msg)
 
     def start(self):
         ''' Start acquisition in either periodic or triggered mode, depending on
