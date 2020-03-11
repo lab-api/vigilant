@@ -35,7 +35,7 @@ class Monitor():
         self.trigger = trigger
 
         self.categories = {'default': {}}
-        self.callbacks = []
+        self.callbacks = {}
         self.alerts = []
 
         self.data = pd.DataFrame()
@@ -104,7 +104,7 @@ class Monitor():
 
     def add_extension(self, extension):
         ''' Add an extension by registering its update() method as a callback '''
-        self.callbacks.append(extension.update)
+        self.callbacks[extension.__class__] = extension.update
 
     def add_alert(self, alert):
         ''' Add an alert by registering its send() method as a callback '''
@@ -146,7 +146,7 @@ class Monitor():
             self.alert()
         self.in_threshold = all_in_threshold
 
-        for callback in self.callbacks:
+        for callback in self.callbacks.values():
             callback(new_data)
 
         return new_data
