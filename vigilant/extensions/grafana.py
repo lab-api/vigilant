@@ -163,13 +163,15 @@ class Generator:
         existing = self.list_observers()
         for category in self.monitor.categories:
             if category not in existing or overwrite:
-                self.add_category(category)
-                existing[category] = []
+                if len(self.monitor.categories[category]) > 0:
+                    self.add_category(category)
+                    existing[category] = []
             for observer in self.monitor.categories[category].values():
                 field = observer.name
                 title = field.split(category+'/')[1]
                 if title not in existing[category] or overwrite:
                     self.add_panel(category, field, title)
+        self.post()
 
     def post(self):
         headers = {"Authorization": f"Bearer {config['grafana']['api key']}",
