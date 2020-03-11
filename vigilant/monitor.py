@@ -5,7 +5,7 @@ import os
 from threading import Thread
 import pandas as pd
 from vigilant import config, Watcher, Listener
-from vigilant.extensions import InfluxClient, FileLogger, Generator
+from vigilant.extensions import InfluxClient, FileLogger, Dashboard
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -51,10 +51,11 @@ class Monitor():
         if filename is not None:
             self.add_extension(FileLogger(filename=filename))
 
-        self.dashboard = dashboard
-        if self.dashboard is not None:
-            self.generator = Generator(self)
-            self.generator.generate()
+        self.dashboard_title = dashboard
+        if self.dashboard_title is not None:
+            self.dashboard = Dashboard(measurement=self.measurement, title=self.dashboard_title)
+            self.dashboard.render()
+            self.dashboard.post()
 
     def watch(self, experiment, name=None, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored actively (querying a method for new
@@ -73,13 +74,15 @@ class Monitor():
             name = experiment.__name__
         if category not in self.categories:
             self.categories[category] = {}
-        name = category + '/' + name
-        self.categories[category][name] = Watcher(name, experiment,
+        field = category + '/' + name
+        self.categories[category][field] = Watcher(field, experiment,
                                                  threshold=threshold,
                                                  reaction=reaction)
-        if self.dashboard is not None:
-            self.generator.generate()
-
+        if self.dashboard_title is not None:
+            self.dashboard.download()
+            self.dashboard.add_panel(name, category, overwrite=False)
+            self.dashboard.render()
+            self.dashboard.post()
 
     def listen(self, name, address, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored passively (initiated from the variable,
@@ -94,12 +97,15 @@ class Monitor():
         '''
         if category not in self.categories:
             self.categories[category] = {}
-        name = category + '/' + name
-        self.categories[category][name] = Listener(name, address,
+        field = category + '/' + name
+        self.categories[category][field] = Listener(field, address,
                                         threshold=threshold,
                                         reaction=reaction)
-        if self.dashboard is not None:
-            self.generator.generate()
+        if self.dashboard_title is not None:
+            self.dashboard.download()
+            self.dashboard.add_panel(name, category, overwrite=False)
+            self.dashboard.render()
+            self.dashboard.post()
 
     def add_extension(self, extension):
         ''' Add an extension by registering its update() method as a callback '''
