@@ -237,7 +237,7 @@ class Panel:
              'for': '5s',
              'frequency': '1s',
              'handler': 1,
-             'name': f'{self.title} alert',
+             'name': f'{self.field}',
              'noDataState': 'no_data',
              'notifications': []}
 
