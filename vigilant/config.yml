@@ -1,11 +1,16 @@
 monitor:
   resampling interval: '1s'
   max points: 65536
+  address: localhost
+  port: 8001
 influx:
   address: localhost
   port: 8086
   database: vigilant
+  measurement: test
 grafana:
   address: localhost
   port: 3000
-  api key: 'eyJrIjoiN3Jua2Q3d0JYVEpuUU0wZk9EV09DdWo4c1YwWjJPWGQiLCJuIjoiRGFzaGJvYXJkIGdlbmVyYXRvciIsImlkIjoxfQ=='
+  api key: 'eyJrIjoidDFuRGpGVlhWa3NSUEVLYmpma2g3SUhpd1pVdUZQN1UiLCJuIjoiVmlnaWxhbnQiLCJpZCI6MX0='
+kapacitor:
+  port: 9092
