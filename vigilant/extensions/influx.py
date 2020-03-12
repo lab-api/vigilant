@@ -3,9 +3,11 @@ import requests
 from vigilant import config
 
 class InfluxClient:
-    def __init__(self, measurement):
+    def __init__(self, measurement, database=None):
         self.address = f"http://{config['influx']['address']}:{config['influx']['port']}"
-        self.database = config['influx']['database']
+        self.database = database
+        if database is None:
+            self.database = config['influx']['database']
         self.measurement = measurement
 
         if not self.database in self.list_databases():
@@ -24,6 +26,11 @@ class InfluxClient:
     def query(self, q):
         params = {'q': q}
         r = requests.get(f'{self.address}/query', params=params).json()
+        return r
+
+    def post(self, q, data={}):
+        params = {'q': q}
+        r = requests.post(f'{self.address}/query', params=params, data=data).json()
         return r
 
     def update(self, data):
