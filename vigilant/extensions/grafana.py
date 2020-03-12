@@ -72,8 +72,7 @@ class Dashboard:
                 "overwrite": "true"}
         data = json.dumps(data).replace('"null"', 'null').replace('"false"', 'false').replace('"true"', 'true')
         address = f"http://{config['grafana']['address']}:{config['grafana']['port']}"
-        r = requests.post(f"{address}/api/dashboards/import", data=data, headers=headers)
-
+        r = requests.post(f"{address}/api/dashboards/db", data=data, headers=headers)
 
     def render(self):
         panels = []
