@@ -25,7 +25,7 @@ class Dashboard:
         id = len(self.rows) + len(self.panels)
         self.rows[title] = Row(title, id)
 
-    def add_panel(self, title, row, bounds=None, overwrite=False):
+    def add_panel(self, title, row, bounds=(-np.inf, np.inf), overwrite=False):
         field = row + '/' + title
         if row not in self.rows:
             self.add_row(row)
@@ -140,7 +140,7 @@ class Row:
         }
 
 class Panel:
-    def __init__(self, title, measurement, field, id, x, y, w, h, bounds=None):
+    def __init__(self, title, measurement, field, id, x, y, w, h, bounds=(-np.inf, np.inf)):
         self.title = title
         self.measurement = measurement
         self.field = field
@@ -164,8 +164,13 @@ class Panel:
         h = model['gridPos']['h']
         bounds = None
         if 'alert' in model:
-            bounds = model['alert']['conditions'][0]['evaluator']['params']
-
+            evaluator =  model['alert']['conditions'][0]['evaluator']
+            if evaluator['type'] == 'gt':
+                bounds = [-np.inf, evaluator['params'][0]]
+            elif evaluator['type'] == 'lt':
+                bounds = [evaluator['params'][0], np.inf]
+            elif evaluator['type'] == 'outside_range':
+                bounds = evaluator['params']
         return Panel(title, measurement, field, id, x, y, w, h, bounds)
 
     def model(self):
@@ -190,11 +195,43 @@ class Panel:
                 }
         alert = {}
         thresholds = []
-        if self.bounds is not None:
+        if np.isfinite(self.bounds[0]) and np.isfinite(self.bounds[1]):
+            evaluator = {'params': self.bounds, 'type': 'outside_range'}
+            thresholds = [{'colorMode': 'critical',
+                            'fill': 'true',
+                            'line': 'true',
+                            'op': 'lt',
+                            'value': self.bounds[0]},
+                           {'colorMode': 'critical',
+                            'fill': 'true',
+                            'line': 'true',
+                            'op': 'gt',
+                            'value': self.bounds[1]}]
+
+
+
+        elif np.isfinite(self.bounds[0]):
+            evaluator = {'params': [self.bounds[0]], 'type': 'lt'}
+            thresholds = [{'colorMode': 'critical',
+                            'fill': 'true',
+                            'line': 'true',
+                            'op': 'lt',
+                            'value': self.bounds[0]}]
+
+        elif np.isfinite(self.bounds[1]):
+            evaluator = {'params': [self.bounds[1]], 'type': 'gt'}
+            thresholds = [{'colorMode': 'critical',
+                            'fill': 'true',
+                            'line': 'true',
+                            'op': 'gt',
+                            'value': self.bounds[1]}]
+
+
+        if len(thresholds) > 0:
             alert = {'alertRuleTags': {},
-             'conditions': [{'evaluator': {'params': self.bounds, 'type': 'outside_range'},
+             'conditions': [{'evaluator': evaluator,
                'operator': {'type': 'and'},
-               'query': {'params': ['A', '1s', 'now']},
+               'query': {'params': ['A', '3s', 'now']},
                'reducer': {'params': [], 'type': 'avg'},
                'type': 'query'}],
              'executionErrorState': 'alerting',
@@ -204,17 +241,6 @@ class Panel:
              'name': f'{self.title} alert',
              'noDataState': 'no_data',
              'notifications': []}
-
-        thresholds = [{'colorMode': 'critical',
-                        'fill': 'true',
-                        'line': 'true',
-                        'op': 'lt',
-                        'value': self.bounds[0]},
-                       {'colorMode': 'critical',
-                        'fill': 'true',
-                        'line': 'true',
-                        'op': 'gt',
-                        'value': self.bounds[1]}]
 
         return {
               "alert": alert,
