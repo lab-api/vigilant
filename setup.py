@@ -8,5 +8,10 @@ setup(
     author='Robert Fasano',
     author_email='robert.j.fasano@colorado.edu',
     packages=find_packages(exclude=['docs']),
-    license='MIT'
+    license='MIT',
+    entry_points={
+    "console_scripts": [
+        "vigilant-daemon = vigilant.tick.daemon",
+    ]
+    }
 )

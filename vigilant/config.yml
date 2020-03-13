@@ -13,4 +13,6 @@ grafana:
   port: 3000
   api key: 'eyJrIjoidDFuRGpGVlhWa3NSUEVLYmpma2g3SUhpd1pVdUZQN1UiLCJuIjoiVmlnaWxhbnQiLCJpZCI6MX0='
 kapacitor:
+  address: localhost
   port: 9092
+  data_dir: 'C:/.kapacitor'
