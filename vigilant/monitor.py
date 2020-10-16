@@ -5,7 +5,7 @@ import os
 from threading import Thread
 import pandas as pd
 from vigilant import config, Watcher, Listener
-from vigilant.extensions import InfluxClient, FileLogger, Dashboard
+from vigilant.extensions import FileLogger, Dashboard
 
 class Monitor():
     ''' Implements periodic or triggered monitoring of any functions passed to
@@ -43,8 +43,8 @@ class Monitor():
         self.running = False
 
         self.measurement = measurement
-        if measurement is not None:
-            self.add_extension(InfluxClient(measurement=self.measurement))
+        # if measurement is not None:
+        #     self.add_extension(InfluxClient(measurement=self.measurement))
 
         if filename is not None:
             self.add_extension(FileLogger(filename=filename))
