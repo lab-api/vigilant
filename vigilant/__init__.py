@@ -25,7 +25,7 @@ class Configurator:
         config[field] = new_value
         Configurator.save(config)
 
-# config = Configurator.load()
+config = Configurator.load()
 
 from .base import Watcher, Listener
 from .monitor import Monitor
