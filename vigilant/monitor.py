@@ -76,11 +76,11 @@ class Monitor():
         self.categories[category][field] = Watcher(field, experiment,
                                                  threshold=threshold,
                                                  reaction=reaction)
-        if self.dashboard_title is not None:
-            self.dashboard.download()
-            self.dashboard.add_panel(name, category, bounds=threshold, overwrite=False)
-            self.dashboard.render()
-            self.dashboard.post()
+        # if self.dashboard_title is not None:
+        #     self.dashboard.download()
+        #     self.dashboard.add_panel(name, category, bounds=threshold, overwrite=False)
+        #     self.dashboard.render()
+        #     self.dashboard.post()
 
     def listen(self, name, address, category='default', threshold=(None, None), reaction=None):
         ''' Add a variable to be monitored passively (initiated from the variable,
@@ -99,11 +99,11 @@ class Monitor():
         self.categories[category][field] = Listener(field, address,
                                         threshold=threshold,
                                         reaction=reaction)
-        if self.dashboard_title is not None:
-            self.dashboard.download()
-            self.dashboard.add_panel(name, category, bounds=threshold, overwrite=False)
-            self.dashboard.render()
-            self.dashboard.post()
+        # if self.dashboard_title is not None:
+        #     self.dashboard.download()
+        #     self.dashboard.add_panel(name, category, bounds=threshold, overwrite=False)
+        #     self.dashboard.render()
+        #     self.dashboard.post()
 
     def add_extension(self, extension):
         ''' Add an extension by registering its update() method as a callback '''
